@@ -1,0 +1,20 @@
+name: Deploy
+on:
+  push:
+    branches:
+     - main
+jobs:
+  deploy:
+    name: deploy to opc
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh pipelines
+        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        with:
+          host: ${{ secrets.OPC_HOST }}
+          user: ${{ secrets.OPC_USER }}
+          key: ${{ secrets.OPC_SECRET_KEY }}
+          first_ssh: |
+            cd shopping-list
+            git pull origin main
+            docker compose up --force-recreate --build -d
