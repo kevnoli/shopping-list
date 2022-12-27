@@ -7,3 +7,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 redis==4.4.0
+alembic==1.9.1
