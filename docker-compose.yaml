@@ -3,8 +3,8 @@ services:
     container_name: postgres
     image: "postgres:15"
     environment:
-      - "POSTGRES_DB=shopping_list"
-      - "POSTGRES_PASSWORD=password"
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
     volumes:
       - db-data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -13,12 +13,14 @@ services:
     image: dpage/pgadmin4
     environment:
       - "PGADMIN_DEFAULT_EMAIL=postgres@example.com"
-      - "PGADMIN_DEFAULT_PASSWORD=password"
+      - PGADMIN_DEFAULT_PASSWORD
       - "PGADMIN_LISTEN_PORT=5050"
     volumes:
       - ./servers.json:/pgadmin4/servers.json
       - pgadmin-data:/var/lib/pgadmin
     restart: on-failure
+    depends_on:
+      - postgres-db
   backend:
     container_name: backend
     build: backend
@@ -27,7 +29,10 @@ services:
     depends_on:
       - postgres-db
       - redis-server
-    restart: unless-stopped
+    environment:
+      - POSTGRES_HOST
+      - POSTGRES_PASSWORD
+    #restart: unless-stopped
   webserver:
     container_name: webserver
     image: "nginx"
@@ -43,10 +48,13 @@ services:
   redis-server:
     container_name: redis_server
     image: redis
+    volumes:
+      - redis-data:/data
     ports:
       - 6379:6379
     restart: on-failure
 volumes:
   db-data:
   pgadmin-data:
+  redis-data:
 
