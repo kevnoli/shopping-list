@@ -53,11 +53,11 @@ class ProductShoppingListCreate(ProductShoppingListBase):
     product_id: int
 
 class ProductShoppingListUpdate(ProductShoppingListBase):
-    product_id: int
+    product_id: int | None = None
 
 # ShoppingList
 class ShoppingListBase(SQLModel):
-    name: Optional[str] = Field(default="Lista")
+    name: str = Field(nullable=False)
 
 class ShoppingList(ShoppingListBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -75,7 +75,7 @@ class ShoppingListCreate(ShoppingListBase):
     pass
 
 class ShoppingListUpdate(ShoppingListBase):
-    pass
+    name: str | None = None
 
 # Product
 class ProductBase(SQLModel):
@@ -96,7 +96,7 @@ class ProductCreate(ProductBase):
     pass
 
 class ProductUpdate(ProductBase):
-    pass
+    name: str | None = None
 
 # Needed for link to work
 ProductShoppingListRead.update_forward_refs()
