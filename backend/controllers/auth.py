@@ -12,6 +12,12 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from db import get_session, get_redis_client
 from models import User, UserCreate, AccessToken
 
+credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
 load_dotenv()
 JWT_SECRET_KEY = getenv("JWT_SECRET_KEY")
 JWT_REFRESH_SECRET_KEY = getenv("JWT_REFRESH_SECRET_KEY")
@@ -32,7 +38,8 @@ def verify_token(user_id: int, token_type: str, token: str) -> bool:
     key = f"user:{user_id}:{token_type}"
     if redis_client.get(key).decode('ascii') == token:
         return True
-    return False
+    else:
+        raise credentials_exception
 
 def create_jwt_token(subject: int, token_type: str = "access") -> str: #nosec B107
     expire = datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES" if token_type == "access" else "REFRESH_TOKEN_EXPIRE_MINUTES"))) # nosec B105
@@ -50,22 +57,13 @@ def get_hash(password: str) -> str:
 def authenticate(username: str, password: str, db: Session = Depends(get_session)) -> User:
     statement = select(User).where(username == username)
     user = db.exec(statement).one()
-    if not user:
-        return False
-    if not verify_password(password, user.password):
-        return False
+    if not user or not verify_password(password, user.password):
+        raise credentials_exception
     return user
 
 async def token(response: Response, form_data : OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     response.headers["Cache-Control"] = "no-store"
-    try:
-        user = authenticate(username=form_data.username, password=form_data.password, db=db)
-    except:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    user = authenticate(username=form_data.username, password=form_data.password, db=db)
     access_token = create_jwt_token(subject=user.id, token_type="access") # nosec B106
     refresh_token = create_jwt_token(subject=user.id, token_type="refresh") # nosec B106
     return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token)
@@ -100,18 +98,8 @@ async def refresh(refresh_token: str , db: Session = Depends(get_session)):
             access_token = create_jwt_token(id)
             add_token_to_redis(user_id, "access", access_token, datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
             return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token) # nosec B106
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
 async def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
@@ -120,16 +108,12 @@ async def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(ge
     except JWTError:
         raise credentials_exception
     user = db.get(User, user_id)
-    if user is None or not verify_token(user_id, "access", token):
+    if user is None:
         raise credentials_exception
+    verify_token(user_id, "access", token)
     return user
 
 async def signout(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
@@ -137,6 +121,5 @@ async def signout(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    if not verify_token(user_id, "access", token):
-        raise credentials_exception
+    verify_token(user_id, "access", token)
     get_redis_client().delete(f"user:{user_id}:{token}")
