@@ -57,7 +57,7 @@ class ProductShoppingListUpdate(ProductShoppingListBase):
 
 # ShoppingList
 class ShoppingListBase(SQLModel):
-    name: str = Field(nullable=False)
+    name: str = Field(max_length=100, nullable=False)
 
 class ShoppingList(ShoppingListBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
