@@ -27,6 +27,19 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    user = db.get(User, user_id)
+    if user is None or not verify_token(user.id, "access", token):
+        raise credentials_exception
+    return user
+
 def add_token_to_redis(user_id: int, token_type: str, token: str, expire: datetime) -> None:
     redis_client = get_redis_client()
     key = f"user:{user_id}:{token_type}"
@@ -36,10 +49,10 @@ def add_token_to_redis(user_id: int, token_type: str, token: str, expire: dateti
 def verify_token(user_id: int, token_type: str, token: str) -> bool:
     redis_client = get_redis_client()
     key = f"user:{user_id}:{token_type}"
-    if redis_client.get(key).decode('ascii') == token:
+    if redis_client.get(key) == token:
         return True
     else:
-        raise credentials_exception
+        return False
 
 def create_jwt_token(subject: int, token_type: str = "access") -> str: #nosec B107
     expire = datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES" if token_type == "access" else "REFRESH_TOKEN_EXPIRE_MINUTES"))) # nosec B105
@@ -98,28 +111,13 @@ async def refresh(refresh_token: str , db: Session = Depends(get_session)):
             access_token = create_jwt_token(id)
             add_token_to_redis(user_id, "access", access_token, datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
             return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token) # nosec B106
+    else:
+        raise credentials_exception
 
-async def get_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
-    try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = db.get(User, user_id)
-    if user is None:
-        raise credentials_exception
-    verify_token(user_id, "access", token)
+async def get_user(user: User = Depends(get_current_user)):
     return user
 
-async def signout(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    verify_token(user_id, "access", token)
-    get_redis_client().delete(f"user:{user_id}:{token}")
+async def signout(user: User = Depends(get_current_user)):
+    get_redis_client().delete(f"user:{user.id}:access")
+    get_redis_client().delete(f"user:{user.id}:refresh")
+    return None
