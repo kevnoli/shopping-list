@@ -12,4 +12,4 @@ def get_session():
         yield session
 
 def get_redis_client():
-    return Redis(host=getenv("REDIS_HOST"), port=6379, db=0)
+    return Redis(host=getenv("REDIS_HOST"), port=6379, db=0, decode_responses=True)
