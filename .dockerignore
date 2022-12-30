@@ -1,5 +1,7 @@
-**/env
+backend/env
 **/*.example
 **/__pycache__
 **/.git*
-**/bandit.yaml
+backend/bandit.yaml
+frontend/node_modules
+Dockerfile
