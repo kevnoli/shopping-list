@@ -19,16 +19,11 @@ services:
       - ./servers.json:/pgadmin4/servers.json
       - pgadmin-data:/var/lib/pgadmin
     restart: on-failure
-    depends_on:
-      - postgres-db
   backend:
     container_name: backend
     build: backend
     volumes:
       - ./backend:/code
-    depends_on:
-      - postgres-db
-      - redis-server
     environment:
       - POSTGRES_HOST
       - POSTGRES_PASSWORD
@@ -36,9 +31,6 @@ services:
   webserver:
     container_name: webserver
     image: "nginx"
-    depends_on:
-      - backend
-      - pgadmin
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./default.conf:/etc/nginx/conf.d/default.conf

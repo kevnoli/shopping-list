@@ -9,6 +9,9 @@ class AccessToken(SQLModel):
     token_type: str
     refresh_token: str
 
+class RefreshToken(SQLModel):
+    refresh_token: str
+
 # User
 class UserBase(SQLModel):
     username: str = Field(unique=True, max_length=16, nullable=False)

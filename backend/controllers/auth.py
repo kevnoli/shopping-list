@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from db import get_session, get_redis_client
-from models import User, UserCreate, AccessToken
+from models import User, UserCreate, AccessToken, RefreshToken
 
 credentials_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -103,14 +103,14 @@ async def register(user: UserCreate, db: Session = Depends(get_session)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f'E-mail "{user.email}" is already being used')
 
-async def refresh(refresh_token: str , db: Session = Depends(get_session)):
-    payload = jwt.decode(refresh_token, key=JWT_REFRESH_SECRET_KEY, algorithms=ALGORITHM)
-    if verify_token(payload.get("sub"), "refresh", refresh_token):
+async def refresh(refresh_token : RefreshToken, db: Session = Depends(get_session)):
+    payload = jwt.decode(refresh_token.refresh_token, key=JWT_REFRESH_SECRET_KEY, algorithms=ALGORITHM)
+    if verify_token(payload.get("sub"), "refresh", refresh_token.refresh_token):
         user_id = payload.get("sub")
         if db.get(User, user_id):
             access_token = create_jwt_token(id)
             add_token_to_redis(user_id, "access", access_token, datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
-            return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token) # nosec B106
+            return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token.refresh_token) # nosec B106
     else:
         raise credentials_exception
 
