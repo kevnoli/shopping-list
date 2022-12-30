@@ -23,7 +23,7 @@ instance.interceptors.response.use((response) => {
 }, (error) => {
     const originalRequest = error.config;
     if (error.response.status === 401) {
-        if (!originalRequest._retry) {
+        if (!originalRequest._retry && error.config.url != "/auth/refresh") {
             originalRequest._retry = true;
             let access_token = ""
             instance
