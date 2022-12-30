@@ -43,7 +43,7 @@
 import router from "@/router";
 import { inject, ref } from "vue";
 import { useUserStore } from "@/store/user";
-import qs from "qs"
+import qs from "qs";
 
 const axios = inject("axios");
 const user = useUserStore();
@@ -65,15 +65,12 @@ const submit = () => {
       localStorage.setItem("access_token", resp.data.access_token);
       localStorage.setItem("refresh_token", resp.data.refresh_token);
       router.push("/");
-      console.log("push")
     })
     .then(() => {
-      axios
-        .get("auth/me")
-        .then((resp) => {
-          user.first_name = resp.data.first_name;
-          router.push("");
-        })
+      axios.get("auth/me").then((resp) => {
+        user.first_name = resp.data.first_name;
+        router.push("");
+      });
     })
     .catch((err) => {
       diag.value = true;
