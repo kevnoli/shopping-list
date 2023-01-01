@@ -35,12 +35,10 @@ instance.interceptors.response.use((response) => {
                     access_token = resp.data.access_token
                     localStorage.setItem("access_token", access_token)
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + access_token;
-                });
+                }).catch(err => console.error(err.response.data.detail));
             return instance(originalRequest);
         }
         router.push("/login")
-    } else if (error.response.status === 422) {
-        console.log(error);
     }
     return Promise.reject(error);
 })
