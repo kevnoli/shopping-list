@@ -68,8 +68,11 @@ def get_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 def authenticate(username: str, password: str, db: Session = Depends(get_session)) -> User:
-    statement = select(User).where(username == username)
-    user = db.exec(statement).one()
+    statement = select(User).where(User.username == username)
+    try:
+        user = db.exec(statement).one()
+    except:
+        raise credentials_exception
     if not user or not verify_password(password, user.password):
         raise credentials_exception
     return user
