@@ -17,4 +17,6 @@ jobs:
           first_ssh: |
             cd shopping-list
             git pull origin main
-            docker compose up --force-recreate --build -d
+            docker compose down
+            docker compose build --build-arg BUILD=prod
+            docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d

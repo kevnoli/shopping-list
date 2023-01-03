@@ -1,0 +1,11 @@
+services:
+  postgres-db:
+    restart: always
+  backend:
+    environment:
+      - BUILD=prod
+    restart: always
+  webserver:
+    restart: always
+  redis-server:
+    restart: always
