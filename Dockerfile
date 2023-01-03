@@ -3,7 +3,7 @@ WORKDIR /code
 COPY ./frontend/package*.json .
 RUN npm install
 COPY ./frontend/ .
-CMD npm run build
+RUN npm run build
 
 FROM nginx
 ARG BUILD=dev
