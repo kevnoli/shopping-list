@@ -5,7 +5,7 @@ from redis import Redis
 
 load_dotenv()
 
-engine = create_engine(getenv("DB_CONN"), echo=True)
+engine = create_engine(getenv("DB_CONN"), echo=True if getenv("BUILD") == "dev" else False)
 
 def get_session():
     with Session(engine) as session:

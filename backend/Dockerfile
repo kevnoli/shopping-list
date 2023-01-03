@@ -7,5 +7,5 @@ COPY . .
 RUN chmod +x wait-for-it.sh
 ARG POSTGRES_HOST
 ARG POSTGRES_PASSWORD
-CMD ./wait-for-it.sh postgres-db:5432 -q -- alembic upgrade head \
+CMD ./wait-for-it.sh postgres-db:5432 -s -- alembic upgrade head \
     && uvicorn main:app --proxy-headers --root-path /api --host 0.0.0.0 --port 8000 --reload
