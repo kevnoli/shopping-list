@@ -1,5 +1,6 @@
 from pydantic import condecimal
-from sqlmodel import Column, ForeignKey, Integer, Relationship, SQLModel, Field
+from sqlmodel import Relationship, SQLModel, Field
+from sqlalchemy.orm import relationship
 from typing import Optional, List
 from datetime import datetime
 
@@ -12,6 +13,21 @@ class AccessToken(SQLModel):
 class RefreshToken(SQLModel):
     refresh_token: str
 
+
+# User-ShoppingList association table
+class UserShoppingListBase(SQLModel):
+    owner: bool = Field(default=False, nullable=False)
+
+class UserShoppingList(UserShoppingListBase, table=True):
+    shopping_list_id: int = Field(primary_key=True, nullable=False, foreign_key="shoppinglist.id")
+    shopping_list: "ShoppingList" = Relationship(back_populates="users")
+    user_id: int = Field(primary_key=True, nullable=False, foreign_key="user.id")
+    user: "User" = Relationship()
+
+class UserShoppingListRead(UserShoppingListBase):
+    owner: bool
+    user_id: int
+
 # User
 class UserBase(SQLModel):
     username: str = Field(unique=True, max_length=16, nullable=False)
@@ -22,6 +38,7 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default = None, primary_key=True, nullable=False)
     password: str = Field(max_length=255, nullable=False)
+    shopping_list: "UserShoppingList" = Relationship(back_populates="user", sa_relationship_kwargs={"cascade": "delete"})
 
 class UserRead(UserBase):
     id: int
@@ -40,7 +57,7 @@ class ProductShoppingListBase(SQLModel):
     amount_bought: int | None = Field(default=None, nullable=True)
 
 class ProductShoppingList(ProductShoppingListBase, table=True):
-    shopping_list_id: int = Field(primary_key=True, nullable=False, sa_column=Column(Integer, ForeignKey("shoppinglist.id", ondelete="CASCADE")))
+    shopping_list_id: int = Field(primary_key=True, nullable=False, foreign_key="shoppinglist.id")
     shopping_list: "ShoppingList" = Relationship(back_populates="products")
     product_id: int = Field(primary_key=True, foreign_key="product.id", nullable=False)
     product: "Product" = Relationship(back_populates="shopping_lists")
@@ -54,6 +71,7 @@ class ProductShoppingListRead(ProductShoppingListBase):
 
 class ProductShoppingListCreate(ProductShoppingListBase):
     product_id: int
+    shopping_list_id: int | None
 
 class ProductShoppingListUpdate(ProductShoppingListBase):
     product_id: int | None = None
@@ -64,15 +82,17 @@ class ShoppingListBase(SQLModel):
 
 class ShoppingList(ShoppingListBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    products: List["ProductShoppingList"] = Relationship(back_populates="shopping_list")
-    created_at: datetime = Field(default=datetime.now(), nullable=False)
-    updated_at: datetime = Field(default=datetime.now(), nullable=False)
+    products: List["ProductShoppingList"] = Relationship(back_populates="shopping_list", sa_relationship_kwargs={"cascade": "delete"})
+    created_at: datetime = Field(default=datetime.utcnow(), nullable=False)
+    updated_at: datetime = Field(default=datetime.utcnow(), nullable=False)
+    users: List["UserShoppingList"] = Relationship(back_populates="shopping_list", sa_relationship_kwargs={"cascade": "delete"})
 
 class ShoppingListRead(ShoppingListBase):
     id: int
     products: List["ProductShoppingListRead"] = []
     created_at: datetime
     updated_at: datetime
+    users: List["UserShoppingListRead"] = []
 
 class ShoppingListCreate(ShoppingListBase):
     pass
