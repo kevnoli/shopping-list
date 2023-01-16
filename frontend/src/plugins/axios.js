@@ -31,7 +31,6 @@ instance.interceptors.response.use((response) => {
                     "refresh_token": localStorage.getItem("refresh_token")
                 })
                 .then((resp) => {
-                    console.log(resp.data)
                     access_token = resp.data.access_token
                     localStorage.setItem("access_token", access_token)
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + access_token;
