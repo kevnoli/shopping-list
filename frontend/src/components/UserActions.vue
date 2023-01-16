@@ -11,7 +11,7 @@
   </v-btn>
 </template>
 <script setup>
-import { inject } from "@vue/runtime-core";
+import { inject, onMounted } from "@vue/runtime-core";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
 
@@ -29,5 +29,13 @@ const logout = () => {
       router.push("/login");
     });
 };
+
+onMounted(() => {
+  axios
+    .get("auth/me")
+    .then((resp) => {
+      user.$patch(resp.data)
+    })
+})
 </script>
 

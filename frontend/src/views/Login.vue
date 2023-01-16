@@ -20,12 +20,7 @@
               </v-row>
               <v-row>
                 <v-col>
-                  <v-text-field
-                    v-model="password"
-                    label="Password"
-                    type="password"
-                    persistent-clear
-                  />
+                  <v-text-field v-model="password" label="Password" type="password" persistent-clear />
                 </v-col>
               </v-row>
             </v-container>
@@ -42,11 +37,9 @@
 <script setup>
 import router from "@/router";
 import { inject, ref } from "vue";
-import { useUserStore } from "@/store/user";
 import qs from "qs";
 
 const axios = inject("axios");
-const user = useUserStore();
 const username = ref("");
 const password = ref("");
 const diag = ref(false);
@@ -64,13 +57,7 @@ const submit = () => {
     .then((resp) => {
       localStorage.setItem("access_token", resp.data.access_token);
       localStorage.setItem("refresh_token", resp.data.refresh_token);
-      router.push("/");
-    })
-    .then(() => {
-      axios.get("auth/me").then((resp) => {
-        user.first_name = resp.data.first_name;
-        router.push("");
-      });
+      router.push("shopping-lists");
     })
     .catch((err) => {
       diag.value = true;
