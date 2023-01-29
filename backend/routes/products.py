@@ -8,8 +8,8 @@ from controllers import ProductController
 router = APIRouter(prefix="/products", tags=["products"])
 
 @router.get("", response_model=List[ProductRead])
-async def fetch_products(db = Depends(get_session)):
-    return ProductController.show(db)
+async def fetch_products(query: str = None, db = Depends(get_session)):
+    return ProductController.show(query, db)
 
 @router.get("/{id}", response_model=ProductRead)
 async def fetch_product(id: int, db = Depends(get_session)):

@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import List
-from fastapi import Depends, HTTPException
-from sqlmodel import Session, select
-from db import get_session
+from fastapi import HTTPException
+from sqlmodel import Session, select, text
 from models import Product, ProductCreate, ProductUpdate
+from unicodedata import normalize, combining
 
 
 class ProductController():
@@ -17,8 +17,12 @@ class ProductController():
         return obj
 
     @classmethod
-    def show(self, db: Session) -> List[Product]:
-        results = db.exec(select(Product)).all()
+    def show(self, query: str, db: Session) -> List[Product]:
+        if query:
+            statement = text("SELECT * FROM product p WHERE UNACCENT(LOWER(p.name)) LIKE '%' || :name || '%'")
+            results = db.exec(statement, params={"name": normalize('NFD', u"".join([c for c in normalize('NFKD', query) if not combining(c)]).lower())}).all()
+        else:
+            results = db.exec(select(Product)).all()
         return results
 
     @classmethod
