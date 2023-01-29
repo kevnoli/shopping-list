@@ -30,7 +30,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception
     except JWTError:
@@ -111,7 +111,7 @@ async def refresh(refresh_token : RefreshToken, db: Session = Depends(get_sessio
     if verify_token(payload.get("sub"), "refresh", refresh_token.refresh_token):
         user_id = payload.get("sub")
         if db.get(User, user_id):
-            access_token = create_jwt_token(id)
+            access_token = create_jwt_token(user_id)
             add_token_to_redis(user_id, "access", access_token, datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
             return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token.refresh_token) # nosec B106
     else:
