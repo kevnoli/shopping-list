@@ -55,6 +55,7 @@ class ProductShoppingListBase(SQLModel):
     price: condecimal(max_digits=10, decimal_places=2, ge=0) = Field(default=0, nullable=True)
     amount_to_buy: int | None = Field(default=1, nullable=True)
     amount_bought: int | None = Field(default=0, nullable=True)
+    completed: bool | None = Field(default=False)
 
 class ProductShoppingList(ProductShoppingListBase, table=True):
     shopping_list_id: int = Field(primary_key=True, nullable=False, foreign_key="shoppinglist.id")
