@@ -22,16 +22,19 @@ instance.interceptors.response.use((response) => {
     return response;
 }, async (error) => {
     let request = error.config
-
-    if (error.response.status == 401 && !request._retry) {
-        request._retry = true
-        if (localStorage.getItem("refresh_token")) {
+    if (error.response.status == 401) {
+        if (!request._retry && request.url != "auth/refresh") {
+            request._retry = true
             const { data: { access_token } } = await instance.post("auth/refresh", { "refresh_token": localStorage.getItem("refresh_token") })
             localStorage.setItem("access_token", access_token)
             return instance(request)
+        } else {
+            router.push("/login")
         }
+    } else if (error.response.status == 404) {
+        // TODO: add alert
+        console.error("Not found");
     }
-    router.push("/login")
     return Promise.reject(error);
 });
 
