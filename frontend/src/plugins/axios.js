@@ -19,28 +19,23 @@ instance.interceptors.request.use((config) => {
 })
 
 instance.interceptors.response.use((response) => {
-    return response
-}, (error) => {
-    const originalRequest = error.config;
-    if (error.response.status === 401) {
-        if (!originalRequest._retry && error.config.url != "/auth/refresh") {
-            originalRequest._retry = true;
-            let access_token = ""
-            instance
-                .post("/auth/refresh", {
-                    "refresh_token": localStorage.getItem("refresh_token")
-                })
-                .then((resp) => {
-                    console.log(resp.data)
-                    access_token = resp.data.access_token
-                    localStorage.setItem("access_token", access_token)
-                    axios.defaults.headers.common['Authorization'] = 'Bearer ' + access_token;
-                }).catch(err => console.error(err.response.data.detail));
-            return instance(originalRequest);
+    return response;
+}, async (error) => {
+    let request = error.config
+    if (error.response.status == 401) {
+        if (!request._retry && request.url != "auth/refresh") {
+            request._retry = true
+            const { data: { access_token } } = await instance.post("auth/refresh", { "refresh_token": localStorage.getItem("refresh_token") })
+            localStorage.setItem("access_token", access_token)
+            return instance(request)
+        } else {
+            router.push("/login")
         }
-        router.push("/login")
+    } else if (error.response.status == 404) {
+        // TODO: add alert
+        console.error("Not found");
     }
     return Promise.reject(error);
-})
+});
 
 export default instance

@@ -7,15 +7,20 @@ const routes = [
     component: () => import('@/layouts/default/Default.vue'),
     children: [
       {
-        path: '',
-        name: 'Home',
-        component: () => import(/* webpackChunkName: "home" */ '@/views/Home.vue'),
+        path: 'shopping-lists',
+        name: 'shopping-lists',
+        component: () => import(/* webpackChunkName: "shopping-lists" */ '@/views/ShoppingLists.vue'),
+      },
+      {
+        path: 'shopping-list/:id',
+        name: 'shopping-list-details',
+        component: () => import(/* webpackChunkName: "shopping-list-details" */ '@/views/ShoppingListDetails.vue'),
       },
     ],
   },
   {
     path: '/login',
-    name: 'Login',
+    name: 'login',
     component: () => import(/* webpackChunkName: "login" */ '@/views/Login.vue')
   }
 ]
