@@ -164,6 +164,11 @@ onMounted(() => {
       list.value = rest
       products.value = product_list
     })
+    .catch((err) => {
+      if (err.response.status == 404){
+        router.back()
+      }
+    })
   nextTick(() => {
     document.getElementById("search").focus()
   })
