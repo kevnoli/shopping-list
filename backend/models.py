@@ -30,7 +30,7 @@ class UserShoppingListRead(UserShoppingListBase):
 
 # User
 class UserBase(SQLModel):
-    username: str = Field(unique=True, max_length=16, nullable=False)
+    username: str = Field(unique=True, min_length=4, max_length=16, nullable=False)
     email: str = Field(unique=True, max_length=320, nullable=False)
     first_name: str = Field(max_length=50, nullable=False)
     last_name: str = Field(max_length=50, nullable=False)
