@@ -22,7 +22,7 @@
     "vue": "^3.2.13",
     "vue-currency-input": "^3.0.3",
     "vue-router": "^4.0.0",
-    "vuetify": "^3.1.2",
+    "vuetify": "^3.1.4",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {
