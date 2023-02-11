@@ -1,9 +1,14 @@
 from datetime import datetime
 from typing import List
 from fastapi import HTTPException
-from sqlmodel import Session, select, text
-from models import Product, ProductCreate, ProductUpdate
+from sqlmodel import Session, col, select, text
+from sqlalchemy import func
+from models import Product, ProductCreate, ProductShoppingList, ProductUpdate
 from unicodedata import normalize, combining
+from sqlalchemy.sql.functions import ReturnTypeFromArgs
+
+class unaccent(ReturnTypeFromArgs):
+    pass
 
 
 class ProductController():
@@ -17,13 +22,17 @@ class ProductController():
         return obj
 
     @classmethod
-    def show(self, query: str, db: Session) -> List[Product]:
+    def show(self, query: str, exclude: int, db: Session) -> List[Product]:
+        statement = select(Product)
+        if exclude:
+            exclude_statement = select(ProductShoppingList.product_id).where(ProductShoppingList.shopping_list_id == exclude)
+            statement = statement.where(col(Product.id).not_in(exclude_statement))
+
         if query:
-            statement = text("SELECT * FROM product p WHERE UNACCENT(LOWER(p.name)) LIKE '%' || :name || '%'")
-            results = db.exec(statement, params={"name": normalize('NFD', u"".join([c for c in normalize('NFKD', query) if not combining(c)]).lower())}).all()
-        else:
-            results = db.exec(select(Product)).all()
-        return results
+            normalizedQuery = normalize('NFD', u"".join([c for c in normalize('NFKD', query) if not combining(c)]).lower())
+            statement = statement.where(unaccent(func.lower(Product.name)).like(f"%{normalizedQuery}%"))
+
+        return db.exec(statement).all()
 
     @classmethod
     def store(self, data: ProductCreate, db: Session) -> Product:

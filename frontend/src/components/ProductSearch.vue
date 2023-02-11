@@ -5,16 +5,16 @@
         Search items
       </v-card-title>
       <v-card-text>
-        <v-text-field v-model="query" label="Name" autofocus clearable append-icon="mdi-magnify" @click:append="searchItem"
-          @keyup.enter="searchItem" />
+        <v-text-field v-model="query" label="Name" autofocus clearable append-icon="mdi-magnify"
+          @click:append="searchItem" @keyup.enter="searchItem" />
         <v-data-table v-if="items" :headers="headers" :items="items">
           <template #item.price="{ item }">
             <v-currency-input v-model="item.raw.price" prefix="$" class="pb-3" density="compact" variant="plain"
               single-line hide-details />
           </template>
           <template #item.amount_to_buy="{ item }">
-            <v-text-field v-model.number="item.raw.amount_to_buy" class="pb-3" density="compact" variant="plain" single-line
-              hide-details />
+            <v-text-field v-model.number="item.raw.amount_to_buy" class="pb-3" density="compact" variant="plain"
+              single-line hide-details />
           </template>
           <template #item.actions="{ item }">
             <v-btn flat size="small" icon="mdi-check" @click="selectItem(item.raw)" />
@@ -49,6 +49,7 @@
   </v-dialog>
 </template>
 <script setup>
+import { list } from "postcss";
 import { inject, ref, computed } from "vue"
 import { useRoute } from "vue-router";
 
@@ -98,8 +99,9 @@ function searchItem() {
   axios
     .get("products", {
       params: {
-        query: query.value
-      }
+        query: query.value,
+        exclude: route.params.id
+      },
     })
     .then((resp) => {
       items.value = resp.data;
