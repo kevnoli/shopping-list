@@ -107,14 +107,17 @@ async def register(user: UserCreate, db: Session = Depends(get_session)):
                 detail=f'E-mail "{user.email}" is already being used')
 
 async def refresh(refresh_token : RefreshToken, db: Session = Depends(get_session)):
-    payload = jwt.decode(refresh_token.refresh_token, key=JWT_REFRESH_SECRET_KEY, algorithms=ALGORITHM)
-    if verify_token(payload.get("sub"), "refresh", refresh_token.refresh_token):
-        user_id = payload.get("sub")
-        if db.get(User, user_id):
-            access_token = create_jwt_token(user_id)
-            add_token_to_redis(user_id, "access", access_token, datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
-            return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token.refresh_token) # nosec B106
-    else:
+    try:
+        payload = jwt.decode(refresh_token.refresh_token, key=JWT_REFRESH_SECRET_KEY, algorithms=ALGORITHM)
+        if verify_token(payload.get("sub"), "refresh", refresh_token.refresh_token):
+            user_id = payload.get("sub")
+            if db.get(User, user_id):
+                access_token = create_jwt_token(user_id)
+                add_token_to_redis(user_id, "access", access_token, datetime.utcnow() + timedelta(minutes=int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
+                return AccessToken(access_token=access_token, token_type="bearer", refresh_token=refresh_token.refresh_token) # nosec B106
+        else:
+            raise credentials_exception
+    except:
         raise credentials_exception
 
 async def get_user(user: User = Depends(get_current_user)):
