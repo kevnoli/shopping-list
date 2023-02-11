@@ -7,6 +7,11 @@ const routes = [
     component: () => import('@/layouts/default/Default.vue'),
     children: [
       {
+        path: '',
+        name: 'home',
+        component: () => import(/* webpackChunkName: "home" */ '@/views/Home.vue'),
+      },
+      {
         path: 'shopping-lists',
         name: 'shopping-lists',
         component: () => import(/* webpackChunkName: "shopping-lists" */ '@/views/ShoppingLists.vue'),
@@ -22,7 +27,11 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import(/* webpackChunkName: "login" */ '@/views/Login.vue')
-  }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import(/* webpackChunkName: "not-found" */ '@/views/NotFound.vue') }
 ]
 
 const router = createRouter({
