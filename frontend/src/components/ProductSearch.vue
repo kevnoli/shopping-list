@@ -5,7 +5,7 @@
         Search items
       </v-card-title>
       <v-card-text>
-        <v-text-field v-model="query" label="Name" clearable append-icon="mdi-magnify" @click:append="searchItem"
+        <v-text-field v-model="query" label="Name" autofocus clearable append-icon="mdi-magnify" @click:append="searchItem"
           @keyup.enter="searchItem" />
         <v-data-table v-if="items" :headers="headers" :items="items">
           <template #item.price="{ item }">
@@ -49,7 +49,7 @@
   </v-dialog>
 </template>
 <script setup>
-import { inject, ref, onUnmounted, computed } from "vue"
+import { inject, ref, computed } from "vue"
 import { useRoute } from "vue-router";
 
 const axios = inject("axios")

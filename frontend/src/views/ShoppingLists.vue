@@ -8,24 +8,29 @@
           <template #activator="{ props }">
             <v-btn v-bind="props" icon="mdi-plus" variant="flat" />
           </template>
-          <v-card>
-            <v-card-title>
-              Add list
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col>
-                    <v-text-field v-model="list.name" label="Name" variant="underlined" />
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer />
-              <v-btn color="primary" @click="saveList()">Salvar</v-btn>
-            </v-card-actions>
-          </v-card>
+          <Form @submit="saveList">
+            <v-card>
+              <v-card-title>
+                Add list
+              </v-card-title>
+              <v-card-text>
+                <v-container>
+                  <v-row>
+                    <v-col>
+                      <Field name="name" v-model="list.name" rules="required" v-slot="{ field, errors }">
+                        <v-text-field v-bind="field" autofocus label="Name" variant="underlined"
+                          :error-messages="errors" />
+                      </Field>
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer />
+                <v-btn color="primary" type="submit">Salvar</v-btn>
+              </v-card-actions>
+            </v-card>
+          </Form>
         </v-dialog>
       </div>
     </v-card-title>
@@ -42,9 +47,10 @@
   </v-card>
 </template>
 <script setup>
-import { inject, onMounted, ref } from "@vue/runtime-core";
+import { inject, onMounted, ref } from "vue";
 import dayjs from "dayjs";
 import { useRouter } from "vue-router";
+import { Form, Field } from "vee-validate";
 
 const router = useRouter();
 const axios = inject("axios");
@@ -77,4 +83,4 @@ onMounted(() => {
     lists.value = resp.data
   });
 });
-</script>
+</script> 

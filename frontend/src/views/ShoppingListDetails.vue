@@ -25,7 +25,7 @@
             density="compact" variant="plain" single-line hide-details :readonly="item.value.completed" />
         </template>
         <template #item.amount_to_buy="{ item }">
-          <v-text-field v-model="item.value.amount_to_buy"
+          <v-text-field v-model="item.value.amount_to_buy" 
             @change="handleChange(item.value.product.id, 'amount_to_buy', item.value.amount_to_buy)" class="pb-3"
             density="compact" variant="plain" single-line hide-details :readonly="item.value.completed" />
         </template>
@@ -39,7 +39,7 @@
         </template>
         <template #item.total="{ item }">
           <v-text-field
-            :model-value="Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(item.raw.price * item.raw.amount_bought)"
+            :model-value="Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(Math.round((item.raw.price * item.raw.amount_bought + Number.EPSILON) * 100) / 100)"
             prefix="$" class="pb-3" density="compact" variant="plain" single-line hide-details readonly />
         </template>
         <template #item.actions="{ item }">
@@ -120,6 +120,14 @@ watch(list, () => {
     })
 }, { deep: true })
 
+watch(productDialog, (value) => {
+  if (!value) {
+    nextTick(() => {
+      document.getElementById("search").focus()
+    })
+  }
+})
+
 function handleChange(item_id, attribute, value) {
   axios
     .patch(`/shopping-lists/${list.value.id}/product/${item_id}`, {
@@ -165,7 +173,7 @@ onMounted(() => {
       products.value = product_list
     })
     .catch((err) => {
-      if (err.response.status == 404){
+      if (err.response.status == 404) {
         router.back()
       }
     })

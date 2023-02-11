@@ -2,7 +2,7 @@
   <v-container>
     <v-row>
       <v-col>
-        <Form as="v-form">
+        <Form @submit="submit">
           <v-card class="mx-auto" max-width="600">
             <v-card-title> Login </v-card-title>
             <v-card-text>
@@ -17,14 +17,14 @@
                 <v-row>
                   <v-col>
                     <Field name="username" v-model="username" rules="required|min:4|max:16" v-slot="{ field, errors }">
-                      <v-text-field v-bind="field" id="username" label="Username" @keyup.enter="submit" :error-messages="errors" />
+                      <v-text-field v-bind="field" autofocus label="Username"  :error-messages="errors" />
                     </Field>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col>
                     <Field name="password" v-model="password" rules="required" v-slot="{ field, errors }">
-                    <v-text-field v-bind="field" label="Password" type="password" @keyup.enter="submit" :error-messages="errors"
+                    <v-text-field v-bind="field" label="Password" type="password" :error-messages="errors"
                       persistent-clear />
                     </Field>
                   </v-col>
@@ -33,7 +33,7 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary" @click.prevent="submit">Login</v-btn>
+              <v-btn color="primary" type="submit">Login</v-btn>
             </v-card-actions>
           </v-card>
         </Form>
@@ -43,7 +43,7 @@
 </template>
 <script setup>
 import router from "@/router";
-import { inject, ref, onMounted, nextTick } from "vue";
+import { inject, ref } from "vue";
 import { Form, Field } from "vee-validate"
 import qs from "qs";
 
@@ -73,9 +73,4 @@ const submit = () => {
     });
 };
 
-onMounted(() => {
-  nextTick(() => {
-    document.getElementById("username").focus()
-  })
-})
 </script>
