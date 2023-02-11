@@ -72,9 +72,7 @@ function saveList() {
   axios
     .post("/shopping-lists", list.value)
     .then((resp) => {
-      list.value = {}
-      lists.value.push(resp.data)
-      dialog.value = false
+      return router.push(`/shopping-list/${resp.data.id}`);
     })
 }
 
