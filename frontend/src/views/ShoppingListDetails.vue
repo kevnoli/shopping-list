@@ -79,9 +79,9 @@ const sortBy = ref([
 ])
 
 const list_total = computed(() => {
-  return Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(products.value.reduce((prev, curr) => {
+  return Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(Math.round((products.value.reduce((prev, curr) => {
     return prev + curr.price * curr.amount_bought
-  }, 0))
+  }, 0) + Number.EPSILON) * 100) / 100)
 })
 
 function itemFilter(value, query, item) {
