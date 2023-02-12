@@ -13,29 +13,29 @@
         <v-btn @click="productDialog = true" icon="mdi-cart-plus" variant="flat" />
       </div>
       <product-search v-model="productDialog" @selected="itemSelected" />
-      <v-data-table v-model:sort-by="sortBy" :headers="headers" :items="products" item-value="product.id" :search="search"
-        :custom-filter="itemFilter" multi-sort dense>
+      <v-data-table v-model:sort-by="sortBy" :headers="headers" :items="products" item-value="product.id"
+        :search="search" :custom-filter="itemFilter" multi-sort dense>
         <template #top>
-          <v-text-field id="search" v-model="search" label="Search" density="compact" variant="solo" single-line
-            clearable />
+          <v-text-field id="search" v-model="search" @click="handleClick" label="Search" density="compact"
+            variant="solo" single-line clearable />
         </template>
         <template #item.price="{ item }">
-          <v-currency-input v-model="item.raw.price"
-            @change="handleChange(item.value, 'price', item.raw.price)" prefix="$" class="pb-3"
-            density="compact" variant="plain"  single-line hide-details :readonly="item.raw.completed" />
+          <v-currency-input v-model="item.raw.price" @change="handleChange(item.value, 'price', item.raw.price)"
+            @click="handleClick" prefix="$" class="pb-3" density="compact" variant="plain" single-line hide-details
+            :readonly="item.raw.completed" />
         </template>
         <template #item.amount_to_buy="{ item }">
-          <v-text-field v-model="item.raw.amount_to_buy" 
-            @change="handleChange(item.value, 'amount_to_buy', item.raw.amount_to_buy)" class="pb-3"
-            density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
+          <v-text-field v-model="item.raw.amount_to_buy"
+            @change="handleChange(item.value, 'amount_to_buy', item.raw.amount_to_buy)" @click="handleClick"
+            class="pb-3" density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
         </template>
         <template #item.match="{ item }">
           <v-btn flat size="small" icon="mdi-link" @click="matchAmounts(item)" />
         </template>
         <template #item.amount_bought="{ item }">
           <v-text-field :id="`bought_${item.value}`" v-model="item.raw.amount_bought"
-            @change="handleChange(item.value, 'amount_bought', item.raw.amount_bought)" class="pb-3"
-            density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
+            @change="handleChange(item.value, 'amount_bought', item.raw.amount_bought)" @click="handleClick"
+            class="pb-3" density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
         </template>
         <template #item.total="{ item }">
           <v-text-field
@@ -137,6 +137,10 @@ function handleChange(item_id, attribute, value) {
       // TODO: add alert
       // TODO: update to previous value
     })
+}
+
+function handleClick(ev) {
+  ev.target.select()
 }
 
 const deleteIcon = ref("mdi-delete")
