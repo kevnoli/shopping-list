@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog">
+  <v-dialog v-model="dialog" max-width="600px">
     <v-card>
       <v-card-title>
         Search items
@@ -13,8 +13,9 @@
               single-line hide-details />
           </template>
           <template #item.amount_to_buy="{ item }">
-            <v-text-field v-model.number="item.raw.amount_to_buy" class="pb-3" density="compact" variant="plain"
-              single-line hide-details />
+            <v-amount-input :options="{ 'precision': item.raw.unit.precision }" :suffix="item.raw.unit.name"
+              v-model="item.raw.amount_to_buy" class="pb-3" density="compact" variant="plain" single-line
+              hide-details />
           </template>
           <template #item.actions="{ item }">
             <v-btn flat size="small" icon="mdi-check" @click="selectItem(item.raw)" />
@@ -28,16 +29,23 @@
                     <v-btn v-bind="props" variant="text" color="primary" @click="item.name = query">Add?</v-btn>
                   </template>
                   <v-card>
-                    <v-card-title>
-                      Add item
-                    </v-card-title>
-                    <v-card-text>
-                      <v-text-field v-model="item.name" />
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-spacer />
-                      <v-btn color="primary" @click="addItem">Add</v-btn>
-                    </v-card-actions>
+                    <Form @submit="addItem">
+                      <v-card-title>
+                        Add item
+                      </v-card-title>
+                      <v-card-text>
+                        <Field name="name" v-model="item.name" v-slot="{ field, errors }" rules="required">
+                          <v-text-field v-bind="field" :error-messages="errors" />
+                        </Field>
+                        <Field name="unit" v-model="item.unit_id" v-slot="{ field, errors }" rules="required">
+                          <v-select :items="units" item-title="name" item-value="id" v-bind="field" :error-messages="errors" />
+                        </Field>
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-spacer />
+                        <v-btn color="primary" type="submit">Add</v-btn>
+                      </v-card-actions>
+                    </Form>
                   </v-card>
                 </v-dialog>
               </td>
@@ -49,9 +57,9 @@
   </v-dialog>
 </template>
 <script setup>
-import { list } from "postcss";
-import { inject, ref, computed } from "vue"
+import { inject, ref, computed, onMounted } from "vue"
 import { useRoute } from "vue-router";
+import { Form, Field } from 'vee-validate'
 
 const axios = inject("axios")
 const route = useRoute()
@@ -70,15 +78,15 @@ const dialog = computed({
 const addDialog = ref(false)
 
 const query = ref("")
-const item = ref({ name: "" })
+const item = ref({ name: "", unit_id: null })
 const items = ref([])
 const headers = [
-  { key: "id", title: "ID" },
   { key: "name", title: "Name" },
   { key: "price", title: "Price" },
   { key: "amount_to_buy", title: "To buy" },
   { key: "actions", title: "Actions" }
 ]
+const units = ref([])
 
 function addItem() {
   axios
@@ -124,4 +132,12 @@ function selectItem(item) {
       emit("selected", resp.data)
     })
 }
+
+onMounted(() => {
+  axios
+    .get("/units")
+    .then((resp) => {
+      units.value = resp.data
+    })
+})
 </script>

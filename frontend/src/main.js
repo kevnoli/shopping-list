@@ -14,6 +14,7 @@ import { createApp } from 'vue'
 import { registerPlugins } from '@/plugins'
 import axios from '@/plugins/axios'
 import VCurrencyInput from '@/components/VCurrencyInput'
+import VAmountInput from '@/components/VAmountInput'
 
 import { defineRule, configure } from 'vee-validate'
 import { required, max, min } from "@vee-validate/rules"
@@ -38,5 +39,6 @@ registerPlugins(app)
 app.provide('axios', axios)
 
 app.component('VCurrencyInput', VCurrencyInput)
+app.component('VAmountInput', VAmountInput)
 
 app.mount('#app')

@@ -20,21 +20,23 @@
             variant="solo" single-line clearable />
         </template>
         <template #item.price="{ item }">
-          <v-currency-input v-model="item.raw.price" @change="handleChange(item.value, 'price', item.raw.price)"
+          <v-currency-input v-model="item.raw.price" @change="handleChange($event, item.value, 'price', item.raw.price)"
             @click="handleClick" prefix="$" class="pb-3" density="compact" variant="plain" single-line hide-details
             :readonly="item.raw.completed" />
         </template>
         <template #item.amount_to_buy="{ item }">
-          <v-text-field v-model="item.raw.amount_to_buy"
-            @change="handleChange(item.value, 'amount_to_buy', item.raw.amount_to_buy)" @click="handleClick"
+          <v-amount-input :options="{ 'precision': item.raw.product.unit.precision }"
+            :suffix="item.raw.product.unit.name" v-model="item.raw.amount_to_buy"
+            @change="handleChange($event, item.value, 'amount_to_buy', item.raw.amount_to_buy)" @click="handleClick"
             class="pb-3" density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
         </template>
         <template #item.match="{ item }">
           <v-btn flat size="small" icon="mdi-link" @click="matchAmounts(item)" />
         </template>
         <template #item.amount_bought="{ item }">
-          <v-text-field :id="`bought_${item.value}`" v-model="item.raw.amount_bought"
-            @change="handleChange(item.value, 'amount_bought', item.raw.amount_bought)" @click="handleClick"
+          <v-amount-input :options="{ 'precision': item.raw.product.unit.precision }"
+            :suffix="item.raw.product.unit.name" :id="`bought_${item.value}`" v-model="item.raw.amount_bought"
+            @change="handleChange($event, item.value, 'amount_bought', item.raw.amount_bought)" @click="handleClick"
             class="pb-3" density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
         </template>
         <template #item.total="{ item }">
@@ -68,7 +70,7 @@ const search = ref("")
 const headers = [
   { key: "product.name", title: "Name", fixed: true },
   { key: "price", title: "Price", width: 150 },
-  { key: "amount_to_buy", title: "To buy", width: 1 },
+  { key: "amount_to_buy", title: "To buy", width: 110 },
   { key: "match", width: 1, sortable: false },
   { key: "amount_bought", title: "Bought", width: 100 },
   { key: "total", title: "Total", width: 150, sortable: false },
@@ -128,15 +130,17 @@ watch(productDialog, (value) => {
   }
 })
 
-function handleChange(item_id, attribute, value) {
-  axios
-    .patch(`/shopping-lists/${list.value.id}/product/${item_id}`, {
-      [attribute]: value
-    })
-    .catch(() => {
-      // TODO: add alert
-      // TODO: update to previous value
-    })
+function handleChange(ev, item_id, attribute, value) {
+  if (ev instanceof Event) {
+    axios
+      .patch(`/shopping-lists/${list.value.id}/product/${item_id}`, {
+        [attribute]: value
+      })
+      .catch(() => {
+        // TODO: add alert
+        // TODO: update to previous value
+      })
+  }
 }
 
 function handleClick(ev) {
