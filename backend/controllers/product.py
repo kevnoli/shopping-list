@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 from fastapi import HTTPException
-from sqlmodel import Session, col, select, text
+from sqlmodel import Session, col, select
 from sqlalchemy import func
 from models import Product, ProductCreate, ProductShoppingList, ProductUpdate
 from unicodedata import normalize, combining

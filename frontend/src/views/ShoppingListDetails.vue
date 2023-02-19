@@ -13,29 +13,31 @@
         <v-btn @click="productDialog = true" icon="mdi-cart-plus" variant="flat" />
       </div>
       <product-search v-model="productDialog" @selected="itemSelected" />
-      <v-data-table v-model:sort-by="sortBy" :headers="headers" :items="products" :search="search"
-        :custom-filter="itemFilter" multi-sort dense>
+      <v-data-table v-model:sort-by="sortBy" :headers="headers" :items="products" item-value="product.id"
+        :search="search" :custom-filter="itemFilter" multi-sort dense>
         <template #top>
-          <v-text-field id="search" v-model="search" label="Search" density="compact" variant="solo" single-line
-            clearable />
+          <v-text-field id="search" v-model="search" @click="handleClick" label="Search" density="compact"
+            variant="solo" single-line clearable />
         </template>
         <template #item.price="{ item }">
-          <v-currency-input v-model="item.value.price"
-            @change="handleChange(item.value.product.id, 'price', item.value.price)" prefix="$" class="pb-3"
-            density="compact" variant="plain" single-line hide-details :readonly="item.value.completed" />
+          <v-currency-input v-model="item.raw.price" @change="handleChange($event, item.value, 'price', item.raw.price)"
+            @click="handleClick" prefix="$" class="pb-3" density="compact" variant="plain" single-line hide-details
+            :readonly="item.raw.completed" />
         </template>
         <template #item.amount_to_buy="{ item }">
-          <v-text-field v-model="item.value.amount_to_buy" 
-            @change="handleChange(item.value.product.id, 'amount_to_buy', item.value.amount_to_buy)" class="pb-3"
-            density="compact" variant="plain" single-line hide-details :readonly="item.value.completed" />
+          <v-amount-input :options="{ 'precision': item.raw.product.unit.precision }"
+            :suffix="item.raw.product.unit.name" v-model="item.raw.amount_to_buy"
+            @change="handleChange($event, item.value, 'amount_to_buy', item.raw.amount_to_buy)" @click="handleClick"
+            class="pb-3" density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
         </template>
         <template #item.match="{ item }">
           <v-btn flat size="small" icon="mdi-link" @click="matchAmounts(item)" />
         </template>
         <template #item.amount_bought="{ item }">
-          <v-text-field :id="`bought_${item.value.product.id}`" v-model="item.value.amount_bought"
-            @change="handleChange(item.value.product.id, 'amount_bought', item.value.amount_bought)" class="pb-3"
-            density="compact" variant="plain" single-line hide-details :readonly="item.value.completed" />
+          <v-amount-input :options="{ 'precision': item.raw.product.unit.precision }"
+            :suffix="item.raw.product.unit.name" :id="`bought_${item.value}`" v-model="item.raw.amount_bought"
+            @change="handleChange($event, item.value, 'amount_bought', item.raw.amount_bought)" @click="handleClick"
+            class="pb-3" density="compact" variant="plain" single-line hide-details :readonly="item.raw.completed" />
         </template>
         <template #item.total="{ item }">
           <v-text-field
@@ -43,9 +45,9 @@
             prefix="$" class="pb-3" density="compact" variant="plain" single-line hide-details readonly />
         </template>
         <template #item.actions="{ item }">
-          <v-btn flat size="small" :icon="item.value.completed ? 'mdi-pencil' : 'mdi-check'"
+          <v-btn flat size="small" :icon="item.raw.completed ? 'mdi-pencil' : 'mdi-check'"
             @click="updateCompleted(item)" />
-          <v-btn flat size="small" icon="mdi-delete" @click.prevent="deleteItem(item)" />
+          <v-btn flat size="small" icon="mdi-delete" @click="deleteItem(item)" />
         </template>
       </v-data-table>
     </v-card-text>
@@ -68,7 +70,7 @@ const search = ref("")
 const headers = [
   { key: "product.name", title: "Name", fixed: true },
   { key: "price", title: "Price", width: 150 },
-  { key: "amount_to_buy", title: "To buy", width: 1 },
+  { key: "amount_to_buy", title: "To buy", width: 110 },
   { key: "match", width: 1, sortable: false },
   { key: "amount_bought", title: "Bought", width: 100 },
   { key: "total", title: "Total", width: 150, sortable: false },
@@ -79,9 +81,9 @@ const sortBy = ref([
 ])
 
 const list_total = computed(() => {
-  return Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(products.value.reduce((prev, curr) => {
+  return Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(Math.round((products.value.reduce((prev, curr) => {
     return prev + curr.price * curr.amount_bought
-  }, 0))
+  }, 0) + Number.EPSILON) * 100) / 100)
 })
 
 function itemFilter(value, query, item) {
@@ -91,9 +93,9 @@ function itemFilter(value, query, item) {
 }
 
 function deleteItem(item) {
-  axios.delete(`/shopping-lists/${list.value.id}/product/${item.value.product.id}`)
+  axios.delete(`/shopping-lists/${list.value.id}/product/${item.value}`)
     .then(() => {
-      products.value.splice(products.value.indexOf(item.value), 1)
+      products.value.splice(products.value.indexOf(item.raw), 1)
     })
     .catch(() => {
       // TODO: add alert
@@ -106,8 +108,8 @@ function itemSelected(item) {
 }
 
 function matchAmounts(item) {
-  item.value.amount_bought = item.value.amount_to_buy
-  const el = document.getElementById(`bought_${item.value.product.id}`)
+  item.raw.amount_bought = item.raw.amount_to_buy
+  const el = document.getElementById(`bought_${item.value}`)
   el.dispatchEvent(new Event('change'))
 }
 
@@ -128,15 +130,21 @@ watch(productDialog, (value) => {
   }
 })
 
-function handleChange(item_id, attribute, value) {
-  axios
-    .patch(`/shopping-lists/${list.value.id}/product/${item_id}`, {
-      [attribute]: value
-    })
-    .catch(() => {
-      // TODO: add alert
-      // TODO: update to previous value
-    })
+function handleChange(ev, item_id, attribute, value) {
+  if (ev instanceof Event) {
+    axios
+      .patch(`/shopping-lists/${list.value.id}/product/${item_id}`, {
+        [attribute]: value
+      })
+      .catch(() => {
+        // TODO: add alert
+        // TODO: update to previous value
+      })
+  }
+}
+
+function handleClick(ev) {
+  ev.target.select()
 }
 
 const deleteIcon = ref("mdi-delete")
@@ -154,14 +162,14 @@ function deleteList() {
 }
 
 function updateCompleted(item) {
-  item.value.completed = !item.value.completed
+  item.raw.completed = !item.raw.completed
   axios
-    .patch(`/shopping-lists/${list.value.id}/product/${item.value.product.id}`, {
-      "completed": Boolean(item.value.completed)
+    .patch(`/shopping-lists/${list.value.id}/product/${item.value}`, {
+      "completed": Boolean(item.raw.completed)
     })
     .catch(() => {
       // TODO: add alert
-      item.value.completed = !item.value.completed
+      item.raw.completed = !item.raw.completed
     })
 }
 
